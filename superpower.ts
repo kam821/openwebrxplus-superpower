@@ -125,7 +125,7 @@ async function writeSettings(sdr_profile: SdrProfile, settings: SdrSetting[]): P
 
 	const combine_settings = (existing_settings: SdrSetting[], settings: SdrSetting[]): SdrSetting[] => {
 		return existing_settings.map((existing_setting): SdrSetting => {
-			const setting = settings.find((setting) => existing_setting.name === setting.name);
+			const setting = getSettingByName(settings, existing_setting.name);
 			if (setting !== undefined) {
 				return setting;
 			}
@@ -153,9 +153,8 @@ async function writeSettings(sdr_profile: SdrProfile, settings: SdrSetting[]): P
 	}
 }
 
-function getSettingValueByName(settings: SdrSetting[], name: string): string | undefined {
-	const setting = settings.find((setting) => setting.name === name);
-	return setting?.value;
+function getSettingByName(settings: SdrSetting[], name: string): SdrSetting | undefined {
+	return settings.find((setting) => setting.name === name);
 }
 
 // Frequency/gain range stuff
@@ -312,10 +311,10 @@ function getCurrentGain(): Gain | undefined {
 }
 
 function getGainFromSettings(settings: SdrSetting[]): Gain | undefined {
-	const value = getSettingValueByName(settings, 'rf_gain-select');
+	const value = getSettingByName(settings, 'rf_gain-select')?.value;
 	switch (value) {
 		case 'manual': {
-			const value = Number(getSettingValueByName(settings, 'rf_gain-manual'));
+			const value = Number(getSettingByName(settings, 'rf_gain-manual')?.value);
 			if (value === undefined || Number.isNaN(value)) {
 				return undefined;
 			}
@@ -334,7 +333,7 @@ function getGainFromSettings(settings: SdrSetting[]): Gain | undefined {
 }
 
 function getSecondaryGainFromSettings(settings: SdrSetting[]): ManualGain | undefined {
-	const value = Number(getSettingValueByName(settings, 'rfgain_sel'));
+	const value = Number(getSettingByName(settings, 'rfgain_sel')?.value);
 	if (value === undefined || Number.isNaN(value)) {
 		return undefined;
 	}

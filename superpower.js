@@ -107,7 +107,7 @@ function writeSettings(sdr_profile, settings) {
         }
         const combine_settings = (existing_settings, settings) => {
             return existing_settings.map((existing_setting) => {
-                const setting = settings.find((setting) => existing_setting.name === setting.name);
+                const setting = getSettingByName(settings, existing_setting.name);
                 if (setting !== undefined) {
                     return setting;
                 }
@@ -133,9 +133,8 @@ function writeSettings(sdr_profile, settings) {
         }
     });
 }
-function getSettingValueByName(settings, name) {
-    const setting = settings.find((setting) => setting.name === name);
-    return setting === null || setting === void 0 ? void 0 : setting.value;
+function getSettingByName(settings, name) {
+    return settings.find((setting) => setting.name === name);
 }
 function getSdrFreqRange(sdr_profile) {
     const sdr_freq_range = {
@@ -240,10 +239,11 @@ function getCurrentGain() {
     }
 }
 function getGainFromSettings(settings) {
-    const value = getSettingValueByName(settings, 'rf_gain-select');
+    var _a, _b;
+    const value = (_a = getSettingByName(settings, 'rf_gain-select')) === null || _a === void 0 ? void 0 : _a.value;
     switch (value) {
         case 'manual': {
-            const value = Number(getSettingValueByName(settings, 'rf_gain-manual'));
+            const value = Number((_b = getSettingByName(settings, 'rf_gain-manual')) === null || _b === void 0 ? void 0 : _b.value);
             if (value === undefined || Number.isNaN(value)) {
                 return undefined;
             }
@@ -261,7 +261,8 @@ function getGainFromSettings(settings) {
     return undefined;
 }
 function getSecondaryGainFromSettings(settings) {
-    const value = Number(getSettingValueByName(settings, 'rfgain_sel'));
+    var _a;
+    const value = Number((_a = getSettingByName(settings, 'rfgain_sel')) === null || _a === void 0 ? void 0 : _a.value);
     if (value === undefined || Number.isNaN(value)) {
         return undefined;
     }
