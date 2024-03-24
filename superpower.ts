@@ -1,12 +1,19 @@
 // Global settings
 module superpower_settings {
-	export const waterfall_refreshing = false;
 	export const increase_zoom_levels_count  = true;
+
 	export const spectrum_fluidity = true;
+	export const spectrum_fluidity_refresh_time = 30; // in ms
+
 	export const spectrum_enlarge = true;
-	export const profile_memory = false;
+	export const spectrum_enlarge_height = '200px';
+
 	export const frequency_change = true;
 	export const gain_change = true;
+
+	// Experimental
+	export const waterfall_refreshing = false;
+	export const profile_memory = false;
 }
 
 // JQuery extensions
@@ -432,7 +439,6 @@ function updateDisplayedWaterfall(): void {
 		return;
 	}
 
-	// Update waterfall colors
 	waterfall_measure_minmax_now = true;
 }
 
@@ -617,7 +623,7 @@ function modifySpectrum(): void | undefined {
 			return undefined;
 		}
 		spectrum = undefined;
-		spectrum = new Spectrum(canvas, 30); // spectrum refresh time in ms
+		spectrum = new Spectrum(canvas, superpower_settings.spectrum_fluidity_refresh_time);
 	}
 
 	if (superpower_settings.spectrum_enlarge) {
@@ -626,11 +632,16 @@ function modifySpectrum(): void | undefined {
 			'background-image': 'none',
 		});
 
-		const spectrum_height = '200px';
 		const spectrum_container = $('.openwebrx-spectrum-container');
 
 		spectrum_container.onClassChange((spectrum_container) => {
-			const height = spectrum_container.hasClass('expanded') ? spectrum_height : '';
+			const height = (() => {
+				if (spectrum_container.hasClass('expanded')) {
+					return superpower_settings.spectrum_enlarge_height;
+				} else {
+					return '';
+				}
+			})();
 			spectrum_container.css({
 				'maxHeight': height,
 				'height': height,
@@ -746,7 +757,7 @@ async function addGainChange(sdr_profile: SdrProfile): Promise<void> {
 			await setGain(gain);
 		}),
 		(event) => {
-			event.data({type: 'manual', value: Number($(event.target).val() as string)});
+			event.data({ type: 'manual', value: Number($(event.target).val() as string) });
 		}
 	);
 
@@ -756,7 +767,7 @@ async function addGainChange(sdr_profile: SdrProfile): Promise<void> {
 			await setSecondaryGain(gain)
 		}),
 		(event) => {
-			event.data({value: Number($(event.target).val() as string)});
+			event.data({ value: Number($(event.target).val() as string) });
 		}
 	);
 

@@ -10,13 +10,16 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 // Global settings
 var superpower_settings;
 (function (superpower_settings) {
-    superpower_settings.waterfall_refreshing = false;
     superpower_settings.increase_zoom_levels_count = true;
     superpower_settings.spectrum_fluidity = true;
+    superpower_settings.spectrum_fluidity_refresh_time = 30; // in ms
     superpower_settings.spectrum_enlarge = true;
-    superpower_settings.profile_memory = false;
+    superpower_settings.spectrum_enlarge_height = '200px';
     superpower_settings.frequency_change = true;
     superpower_settings.gain_change = true;
+    // Experimental
+    superpower_settings.waterfall_refreshing = false;
+    superpower_settings.profile_memory = false;
 })(superpower_settings || (superpower_settings = {}));
 $.fn.onClassChange = function (callback) {
     return $(this).each(({}, element) => {
@@ -349,7 +352,6 @@ function updateDisplayedWaterfall() {
     if (!superpower_settings.waterfall_refreshing) {
         return;
     }
-    // Update waterfall colors
     waterfall_measure_minmax_now = true;
 }
 function updateDisplayedZoomLevel() {
@@ -519,17 +521,23 @@ function modifySpectrum() {
             return undefined;
         }
         spectrum = undefined;
-        spectrum = new Spectrum(canvas, 30); // spectrum refresh time in ms
+        spectrum = new Spectrum(canvas, superpower_settings.spectrum_fluidity_refresh_time);
     }
     if (superpower_settings.spectrum_enlarge) {
         // Change height of spectrum and remove background image and add event on hide/show spectrum
         $('#openwebrx-frequency-container').css({
             'background-image': 'none',
         });
-        const spectrum_height = '200px';
         const spectrum_container = $('.openwebrx-spectrum-container');
         spectrum_container.onClassChange((spectrum_container) => {
-            const height = spectrum_container.hasClass('expanded') ? spectrum_height : '';
+            const height = (() => {
+                if (spectrum_container.hasClass('expanded')) {
+                    return superpower_settings.spectrum_enlarge_height;
+                }
+                else {
+                    return '';
+                }
+            })();
             spectrum_container.css({
                 'maxHeight': height,
                 'height': height,
