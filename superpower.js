@@ -1,3 +1,4 @@
+"use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -376,18 +377,22 @@ function updateDisplayedGain(sdr_profile, sdr_settings) {
         }
         switch (settings_gain.type) {
             case 'auto': {
-                $('#gain-mode').html(`Gain: auto`)
+                $('#gain-mode')
+                    .html(`Gain: auto`)
                     .prop('title', 'Gain (auto)');
-                $('#gain-level').prop('title', `Gain (auto)`)
+                $('#gain-level')
+                    .prop('title', `Gain (auto)`)
                     .prop('disabled', true);
                 break;
             }
             case 'manual': {
                 const gain_value = settings_gain.value;
                 const displayed_gain = gain_range.reversed ? -gain_value : gain_value;
-                $('#gain-mode').html(`Gain: ${displayed_gain}dB`)
+                $('#gain-mode')
+                    .html(`Gain: ${displayed_gain}dB`)
                     .prop('title', `Gain (${displayed_gain}dB)`);
-                $('#gain-level').prop('title', `Gain (${displayed_gain}dB)`)
+                $('#gain-level')
+                    .prop('title', `Gain (${displayed_gain}dB)`)
                     .prop('value', gain_value)
                     .prop('disabled', false);
                 break;
@@ -690,12 +695,12 @@ $(document).on('DOMContentLoaded', () => {
     waitFor(() => 'spectrum' in window && spectrum !== undefined, () => {
         modifySpectrum();
     });
-    waitFor(() => getSelectedProfile() !== undefined, () => __awaiter(this, void 0, void 0, function* () {
+    waitFor(() => getSelectedProfile() !== undefined, () => __awaiter(void 0, void 0, void 0, function* () {
         const sdr_profile = getSelectedProfile();
         if (sdr_profile === undefined) {
             return undefined;
         }
-        $('#openwebrx-sdr-profiles-listbox').on('change', () => __awaiter(this, void 0, void 0, function* () {
+        $('#openwebrx-sdr-profiles-listbox').on('change', () => __awaiter(void 0, void 0, void 0, function* () {
             yield triggerProfileChangeEvent();
         }));
         addProfileMemory();

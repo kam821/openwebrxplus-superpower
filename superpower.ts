@@ -465,9 +465,11 @@ async function updateDisplayedGain(sdr_profile: SdrProfile, sdr_settings: SdrSet
 
 	switch (settings_gain.type) {
 		case 'auto': {
-			$('#gain-mode').html(`Gain: auto`)
+			$('#gain-mode')
+				.html(`Gain: auto`)
 				.prop('title', 'Gain (auto)');
-			$('#gain-level').prop('title', `Gain (auto)`)
+			$('#gain-level')
+				.prop('title', `Gain (auto)`)
 				.prop('disabled', true);
 			break;
 		}
@@ -475,9 +477,11 @@ async function updateDisplayedGain(sdr_profile: SdrProfile, sdr_settings: SdrSet
 			const gain_value = settings_gain.value;
 			const displayed_gain = gain_range.reversed ? -gain_value : gain_value;
 
-			$('#gain-mode').html(`Gain: ${displayed_gain}dB`)
+			$('#gain-mode')
+				.html(`Gain: ${displayed_gain}dB`)
 				.prop('title', `Gain (${displayed_gain}dB)`);
-			$('#gain-level').prop('title', `Gain (${displayed_gain}dB)`)
+			$('#gain-level')
+				.prop('title', `Gain (${displayed_gain}dB)`)
 				.prop('value', gain_value)
 				.prop('disabled', false);
 			break;
