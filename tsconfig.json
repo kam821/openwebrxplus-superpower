@@ -1,0 +1,29 @@
+{
+    "compileOnSave": false,
+    "compilerOptions": {
+        "sourceMap": false,
+        "target": "ES6",
+        "experimentalDecorators": true,
+        "noImplicitAny": true,
+        "strictNullChecks": true,
+        "allowUnreachableCode": true,
+        "allowUnusedLabels": false,
+        "alwaysStrict": false,
+        "exactOptionalPropertyTypes": true,
+        "noFallthroughCasesInSwitch": true,
+        "noImplicitOverride": true,
+        "noImplicitReturns": true,
+        "noImplicitThis": true,
+        "noPropertyAccessFromIndexSignature": true,
+        "noUncheckedIndexedAccess": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "strict": true,
+    },
+    "exclude": [
+        "node_modules"
+    ],
+    "angularCompilerOptions": {
+        "preserveWhitespaces": true,
+    }
+}
