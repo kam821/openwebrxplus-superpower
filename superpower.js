@@ -107,7 +107,7 @@ function writeSettings(sdr_profile, settings) {
         }
         const combine_settings = (existing_settings, settings) => {
             return existing_settings.map((existing_setting) => {
-                const setting = settings.find((setting) => existing_setting.name == setting.name);
+                const setting = settings.find((setting) => existing_setting.name === setting.name);
                 if (setting !== undefined) {
                     return setting;
                 }
@@ -134,7 +134,7 @@ function writeSettings(sdr_profile, settings) {
     });
 }
 function getSettingValueByName(settings, name) {
-    const setting = settings.find((setting) => setting.name == name);
+    const setting = settings.find((setting) => setting.name === name);
     return setting === null || setting === void 0 ? void 0 : setting.value;
 }
 function getSdrFreqRange(sdr_profile) {
@@ -189,7 +189,7 @@ function setFrequency(jump_freq) {
             return undefined;
         }
         const freq_decoded = (() => {
-            if (jump_freq.type == 'value') {
+            if (jump_freq.type === 'value') {
                 if (Number.isNaN(jump_freq.exp) || Number.isNaN(jump_freq.value)) {
                     return undefined;
                 }
