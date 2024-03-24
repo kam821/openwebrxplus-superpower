@@ -10,7 +10,7 @@ POC of Superpower plugin for OpenWebRX+
 - Last profile memory (experimental)
 
 ## Installation
-1) Manually create an SDR profile whose id starts with 'unlocked' (case insensitive) via editing the settings.json file (example location: /var/lib/openwebrx/settings.json).\
+1) Manually create an SDR profile whose id starts with 'unlocked' (case insensitive) via editing the settings.json file (example location: /var/lib/openwebrx/settings.json).
 - Example:
 ```json
     "sdrs": {
