@@ -62,7 +62,7 @@ function debounce(threshold, callback) {
     };
 }
 function isProfileUnlocked(sdr_profile) {
-    return sdr_profile.name.toLowerCase().startsWith('unlocked');
+    return sdr_profile.id.toLowerCase().startsWith('unlocked');
 }
 function getSelectedProfile() {
     var _a;
@@ -73,7 +73,7 @@ function getSelectedProfile() {
     }
     return {
         device: desc[0],
-        name: desc[1],
+        id: desc[1],
     };
 }
 function readSettings(sdr_profile) {
@@ -83,7 +83,7 @@ function readSettings(sdr_profile) {
         }
         try {
             const doc = yield $.ajax({
-                url: `settings/sdr/${sdr_profile.device}/profile/${sdr_profile.name}`,
+                url: `settings/sdr/${sdr_profile.device}/profile/${sdr_profile.id}`,
                 type: 'GET',
                 xhrFields: {
                     withCredentials: true
@@ -119,7 +119,7 @@ function writeSettings(sdr_profile, settings) {
         // Save data to profile "Unlocked" with POST query
         try {
             yield $.ajax({
-                url: `settings/sdr/${sdr_profile.device}/profile/${sdr_profile.name}`,
+                url: `settings/sdr/${sdr_profile.device}/profile/${sdr_profile.id}`,
                 type: 'POST',
                 data: $.param(data),
                 xhrFields: {
@@ -513,6 +513,16 @@ function updateDisplayedSecondaryGainRange(sdr_profile, sdr_settings) {
         $secondary_gain_level.prop('value', gain_value);
     });
 }
+function updateDisplay(sdr_profile, sdr_settings) {
+    return __awaiter(this, void 0, void 0, function* () {
+        yield updateDisplayedGain(sdr_profile, sdr_settings);
+        yield updateDisplayedSecondaryGain(sdr_profile, sdr_settings);
+        yield updateDisplayedGainRange(sdr_profile, sdr_settings);
+        yield updateDisplayedSecondaryGainRange(sdr_profile, sdr_settings);
+        updateDisplayedWaterfall();
+        updateDisplayedZoomLevel();
+    });
+}
 // New functionality/elements related stuff
 function modifySpectrum() {
     var _a;
@@ -569,7 +579,7 @@ function addProfileMemory() {
             localStorage.removeItem(last_profile_item_key);
         }
         else {
-            localStorage.setItem(last_profile_item_key, `${sdr_profile.device}|${sdr_profile.name}`);
+            localStorage.setItem(last_profile_item_key, `${sdr_profile.device}|${sdr_profile.id}`);
         }
     });
 }
@@ -599,7 +609,7 @@ function addFrequencyChange() {
         };
         yield setFrequency(freq);
     }));
-    addProfileChangeEvent((sdr_profile, sdr_settings) => {
+    onProfileChangeEvent((sdr_profile, sdr_settings) => {
         if (!isProfileUnlocked(sdr_profile) || sdr_settings === undefined) {
             $('#freq-jump-prev').hide();
             $('#freq-jump-next').hide();
@@ -649,7 +659,7 @@ function addGainChange(sdr_profile) {
         })), (event) => {
             event.data({ value: Number($(event.target).val()) });
         });
-        addProfileChangeEvent((sdr_profile, sdr_settings) => {
+        onProfileChangeEvent((sdr_profile, sdr_settings) => {
             const $section_gain = $('#openwebrx-section-gain');
             if (!isProfileUnlocked(sdr_profile) || sdr_settings === undefined) {
                 $section_gain.hide();
@@ -662,28 +672,18 @@ function addGainChange(sdr_profile) {
         });
     });
 }
-function addProfileChangeEvent(callback) {
+function onProfileChangeEvent(callback) {
     $(document).on('event:superpower_sdr_profile_changed', ({}, sdr_profile, sdr_settings) => {
         callback(sdr_profile, sdr_settings);
     });
 }
-function triggerProfileChange() {
+function triggerProfileChangeEvent() {
     return __awaiter(this, void 0, void 0, function* () {
         const sdr_profile = getSelectedProfile();
-        if (sdr_profile === undefined) {
-            return undefined;
+        if (sdr_profile !== undefined) {
+            const sdr_settings = yield readSettings(sdr_profile);
+            $(document).trigger('event:superpower_sdr_profile_changed', [sdr_profile, sdr_settings]);
         }
-        const sdr_settings = yield readSettings(sdr_profile);
-        $(document).trigger('event:superpower_sdr_profile_changed', [sdr_profile, sdr_settings]);
-        if (sdr_settings === undefined) {
-            return;
-        }
-        yield updateDisplayedGain(sdr_profile, sdr_settings);
-        yield updateDisplayedSecondaryGain(sdr_profile, sdr_settings);
-        yield updateDisplayedGainRange(sdr_profile, sdr_settings);
-        yield updateDisplayedSecondaryGainRange(sdr_profile, sdr_settings);
-        updateDisplayedWaterfall();
-        updateDisplayedZoomLevel();
     });
 }
 $(document).on('DOMContentLoaded', () => {
@@ -696,11 +696,16 @@ $(document).on('DOMContentLoaded', () => {
             return undefined;
         }
         $('#openwebrx-sdr-profiles-listbox').on('change', () => __awaiter(this, void 0, void 0, function* () {
-            yield triggerProfileChange();
+            yield triggerProfileChangeEvent();
         }));
         addProfileMemory();
         addFrequencyChange();
         yield addGainChange(sdr_profile);
-        yield triggerProfileChange();
+        onProfileChangeEvent((sdr_profile, sdr_settings) => {
+            if (sdr_settings !== undefined) {
+                updateDisplay(sdr_profile, sdr_settings);
+            }
+        });
+        yield triggerProfileChangeEvent();
     }));
 });

@@ -69,11 +69,11 @@ function debounce<Args extends any[]>(threshold: number, callback: (...args: Arg
 // SDR profile related stuff
 interface SdrProfile {
 	readonly device: string,
-	readonly name: string,
+	readonly id: string,
 }
 
 function isProfileUnlocked(sdr_profile: SdrProfile): boolean {
-	return sdr_profile.name.toLowerCase().startsWith('unlocked');
+	return sdr_profile.id.toLowerCase().startsWith('unlocked');
 }
 
 function getSelectedProfile(): SdrProfile | undefined {
@@ -84,7 +84,7 @@ function getSelectedProfile(): SdrProfile | undefined {
 	}
 	return {
 		device: desc[0],
-		name: desc[1],
+		id: desc[1],
 	};
 }
 
@@ -101,7 +101,7 @@ async function readSettings(sdr_profile: SdrProfile): Promise<SdrSetting[] | und
 
 	try {
 		const doc: Document = await $.ajax({
-			url: `settings/sdr/${sdr_profile.device}/profile/${sdr_profile.name}`,
+			url: `settings/sdr/${sdr_profile.device}/profile/${sdr_profile.id}`,
 			type: 'GET',
 			xhrFields: {
 				withCredentials: true
@@ -139,7 +139,7 @@ async function writeSettings(sdr_profile: SdrProfile, settings: SdrSetting[]): P
 	// Save data to profile "Unlocked" with POST query
 	try {
 		await $.ajax({
-			url: `settings/sdr/${sdr_profile.device}/profile/${sdr_profile.name}`,
+			url: `settings/sdr/${sdr_profile.device}/profile/${sdr_profile.id}`,
 			type: 'POST',
 			data: $.param(data),
 			xhrFields: {
@@ -614,6 +614,16 @@ async function updateDisplayedSecondaryGainRange(sdr_profile: SdrProfile, sdr_se
 	$secondary_gain_level.prop('value', gain_value);
 }
 
+async function updateDisplay(sdr_profile: SdrProfile, sdr_settings: SdrSetting[]): Promise<void | undefined> {
+	await updateDisplayedGain(sdr_profile, sdr_settings);
+	await updateDisplayedSecondaryGain(sdr_profile, sdr_settings);
+	await updateDisplayedGainRange(sdr_profile, sdr_settings);
+	await updateDisplayedSecondaryGainRange(sdr_profile, sdr_settings);
+
+	updateDisplayedWaterfall();
+	updateDisplayedZoomLevel();
+}
+
 // New functionality/elements related stuff
 function modifySpectrum(): void | undefined {
 	if (superpower_settings.spectrum_fluidity) {
@@ -672,7 +682,7 @@ function addProfileMemory(): void {
 		if (sdr_profile === undefined) {
 			localStorage.removeItem(last_profile_item_key);
 		} else {
-			localStorage.setItem(last_profile_item_key, `${sdr_profile.device}|${sdr_profile.name}`);
+			localStorage.setItem(last_profile_item_key, `${sdr_profile.device}|${sdr_profile.id}`);
 		}
 	});
 }
@@ -707,7 +717,7 @@ function addFrequencyChange(): void {
 		await setFrequency(freq);
 	});
 
-	addProfileChangeEvent((sdr_profile: SdrProfile, sdr_settings?: SdrSetting[]) => {
+	onProfileChangeEvent((sdr_profile: SdrProfile, sdr_settings?: SdrSetting[]) => {
 		if (!isProfileUnlocked(sdr_profile) || sdr_settings === undefined) {
 			$('#freq-jump-prev').hide();
 			$('#freq-jump-next').hide();
@@ -771,7 +781,7 @@ async function addGainChange(sdr_profile: SdrProfile): Promise<void> {
 		}
 	);
 
-	addProfileChangeEvent((sdr_profile: SdrProfile, sdr_settings?: SdrSetting[]) => {
+	onProfileChangeEvent((sdr_profile: SdrProfile, sdr_settings?: SdrSetting[]) => {
 		const $section_gain = $('#openwebrx-section-gain');
 		if (!isProfileUnlocked(sdr_profile) || sdr_settings === undefined) {
 			$section_gain.hide();
@@ -783,34 +793,19 @@ async function addGainChange(sdr_profile: SdrProfile): Promise<void> {
 	});
 }
 
-function addProfileChangeEvent(callback: (sdr_profile: SdrProfile, sdr_settings?: SdrSetting[]) => void) {
+function onProfileChangeEvent(callback: (sdr_profile: SdrProfile, sdr_settings?: SdrSetting[]) => void) {
 	$(document).on('event:superpower_sdr_profile_changed',
 		({}, sdr_profile: SdrProfile, sdr_settings?: SdrSetting[]) => {
 			callback(sdr_profile, sdr_settings);
 		});
 }
 
-async function triggerProfileChange(): Promise<void | undefined> {
+async function triggerProfileChangeEvent(): Promise<void | undefined> {
 	const sdr_profile = getSelectedProfile();
-	if (sdr_profile === undefined) {
-		return undefined;
+	if (sdr_profile !== undefined) {
+		const sdr_settings = await readSettings(sdr_profile);
+		$(document).trigger('event:superpower_sdr_profile_changed', [sdr_profile, sdr_settings]);
 	}
-
-	const sdr_settings = await readSettings(sdr_profile);
-
-	$(document).trigger('event:superpower_sdr_profile_changed', [sdr_profile, sdr_settings]);
-
-	if (sdr_settings === undefined) {
-		return;
-	}
-
-	await updateDisplayedGain(sdr_profile, sdr_settings);
-	await updateDisplayedSecondaryGain(sdr_profile, sdr_settings);
-	await updateDisplayedGainRange(sdr_profile, sdr_settings);
-	await updateDisplayedSecondaryGainRange(sdr_profile, sdr_settings);
-
-	updateDisplayedWaterfall();
-	updateDisplayedZoomLevel();
 }
 
 $(document).on('DOMContentLoaded', (): void => {
@@ -825,13 +820,19 @@ $(document).on('DOMContentLoaded', (): void => {
 		}
 
 		$('#openwebrx-sdr-profiles-listbox').on('change', async (): Promise<void | undefined> => {
-			await triggerProfileChange();
+			await triggerProfileChangeEvent();
 		});
 
 		addProfileMemory();
 		addFrequencyChange();
 		await addGainChange(sdr_profile);
 
-		await triggerProfileChange();
+		onProfileChangeEvent((sdr_profile, sdr_settings) => {
+			if (sdr_settings !== undefined) {
+				updateDisplay(sdr_profile, sdr_settings);
+			}
+		})
+
+		await triggerProfileChangeEvent();
 	});
 });
