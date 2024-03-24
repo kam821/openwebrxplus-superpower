@@ -18,3 +18,6 @@ POC of Superpower plugin for OpenWebRX+
 
 ## Support
 You use this plugin at your own risk. There is no guarantee.
+
+## Screenshot
+![Screenshot](docs/images/screenshot.png)
