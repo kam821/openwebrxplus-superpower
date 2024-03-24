@@ -1,6 +1,7 @@
 // Global settings
 module superpower_settings {
-	export const increase_zoom_levels_count  = true;
+	export const increase_zoom_levels  = true;
+	export const increase_zoom_levels_count = 128;
 
 	export const spectrum_fluidity = true;
 	export const spectrum_fluidity_refresh_time = 30; // in ms
@@ -443,12 +444,12 @@ function updateDisplayedWaterfall(): void {
 }
 
 function updateDisplayedZoomLevel(): void {
-	if (!superpower_settings.increase_zoom_levels_count) {
+	if (!superpower_settings.increase_zoom_levels) {
 		return;
 	}
 
 	// Smoother zooming
-	zoom_levels_count = 128;
+	zoom_levels_count = superpower_settings.increase_zoom_levels_count;
 	mkzoomlevels();
 }
 

@@ -10,7 +10,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 // Global settings
 var superpower_settings;
 (function (superpower_settings) {
-    superpower_settings.increase_zoom_levels_count = true;
+    superpower_settings.increase_zoom_levels = true;
+    superpower_settings.increase_zoom_levels_count = 128;
     superpower_settings.spectrum_fluidity = true;
     superpower_settings.spectrum_fluidity_refresh_time = 30; // in ms
     superpower_settings.spectrum_enlarge = true;
@@ -355,11 +356,11 @@ function updateDisplayedWaterfall() {
     waterfall_measure_minmax_now = true;
 }
 function updateDisplayedZoomLevel() {
-    if (!superpower_settings.increase_zoom_levels_count) {
+    if (!superpower_settings.increase_zoom_levels) {
         return;
     }
     // Smoother zooming
-    zoom_levels_count = 128;
+    zoom_levels_count = superpower_settings.increase_zoom_levels_count;
     mkzoomlevels();
 }
 function updateDisplayedGain(sdr_profile, sdr_settings) {
