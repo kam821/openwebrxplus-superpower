@@ -5,6 +5,7 @@ POC of Superpower plugin for OpenWebRX+
 - Increased zoom levels count
 - Increased waterfall refresh rate 
 - Enlargement of waterfall display area
+- Ability to resize waterfall display area (experimental)
 - Ability to set any frequency
 - Ability to change the gain level / switch between auto/manual
 - Last profile memory (experimental)

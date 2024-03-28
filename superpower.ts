@@ -7,20 +7,21 @@ module superpower_settings {
 	export const spectrum_fluidity_refresh_time = 30; // in ms
 
 	export const spectrum_enlarge = true;
-	export const spectrum_enlarge_height = '200px';
+	export const spectrum_enlarge_height = 200; // in px
+	export const spectrum_enlarge_resizable = true; // experimental
 
 	export const frequency_change = true;
 	export const gain_change = true;
 
-	// Experimental
-	export const waterfall_refreshing = false;
-	export const profile_memory = false;
+	export const waterfall_refreshing = false; // experimental
+	export const profile_memory = false; // experimental
 }
 
 // JQuery extensions
 interface JQuery {
 	onClassChange: (callback: (node: JQuery<Node>, class_name: string) => void) => JQuery<HTMLElement>,
 	onResize: (callback: (node: JQuery<Node>) => void) => JQuery<HTMLElement>,
+	isEventBound: <Args extends any[], Ret>(type: string, fn: (...args: Args) => Ret) => boolean,
 }
 
 $.fn.onClassChange = function(callback: (node: JQuery<Node>, class_name: string) => void): JQuery<HTMLElement> {
@@ -45,6 +46,16 @@ $.fn.onResize = function(callback: (node: JQuery<Node>) => void): JQuery<HTMLEle
 		}).observe(element);
 	});
 }
+
+$.fn.isEventBound = function<Args extends any[], Ret>(type: string, fn: (...args: Args) => Ret) {
+	const data = this.data('events')?.[type];
+
+	if (data === undefined || data.length === 0) {
+		return false;
+	}
+
+	return $.inArray(fn, data) !== -1;
+};
 
 // Utilities
 function waitFor(predicate: () => boolean, callback: () => void, delay: number = 100): void {
@@ -629,39 +640,90 @@ async function updateDisplay(sdr_profile: SdrProfile, sdr_settings: SdrSetting[]
 }
 
 // New functionality/elements related stuff
-function modifySpectrum(): void | undefined {
-	if (superpower_settings.spectrum_fluidity) {
-		// Replace instance of spectrum to improve fps
-		const canvas = $('#openwebrx-spectrum-canvas')?.[0];
-		if (canvas === undefined) {
-			return undefined;
+function fluidizeSpectrum(): void {
+	if (!superpower_settings.spectrum_fluidity) {
+		return;
+	}
+	// Replace instance of spectrum to improve fps
+	const canvas = $('#openwebrx-spectrum-canvas')?.[0];
+	if (canvas === undefined) {
+		return undefined;
+	}
+	spectrum = undefined;
+	spectrum = new Spectrum(canvas, superpower_settings.spectrum_fluidity_refresh_time);
+}
+
+function resizeSpectrum(): void {
+	if (!superpower_settings.spectrum_enlarge) {
+		return;
+	}
+
+	// Change height of spectrum and remove background image and add event on hide/show spectrum
+	const $frequency_container = $('#openwebrx-frequency-container');
+	const $spectrum_container = $('.openwebrx-spectrum-container');
+
+	$frequency_container.css({
+		'background-image': 'none',
+	});
+
+	let spectrum_height = (() => {
+		if (superpower_settings.spectrum_enlarge_height !== undefined) {
+			return `${superpower_settings.spectrum_enlarge_height}px`;
+		} else {
+			return `${$spectrum_container.height()!}px`;
 		}
-		spectrum = undefined;
-		spectrum = new Spectrum(canvas, superpower_settings.spectrum_fluidity_refresh_time);
+	})();
+
+	$spectrum_container.onClassChange(($spectrum_container) => {
+		const height = (() => {
+			if ($spectrum_container.hasClass('expanded')) {
+				return spectrum_height;
+			} else {
+				return '';
+			}
+		})();
+		$spectrum_container.css({
+			'maxHeight': height,
+			'height': height,
+		});
+	});
+
+	if (!superpower_settings.spectrum_enlarge_resizable) {
+		return;
 	}
 
-	if (superpower_settings.spectrum_enlarge) {
-		// Change height of spectrum and remove background image and add event on hide/show spectrum
-		$('#openwebrx-frequency-container').css({
-			'background-image': 'none',
-		});
+	$spectrum_container.css({
+		'resize': 'vertical'
+	});
 
-		const spectrum_container = $('.openwebrx-spectrum-container');
+	// Crude way to implement resizing. Current #openwebrx-frequency-container mousemove event ruines standard resizing.
+	let spectrum_resizing = false;
 
-		spectrum_container.onClassChange((spectrum_container) => {
-			const height = (() => {
-				if (spectrum_container.hasClass('expanded')) {
-					return superpower_settings.spectrum_enlarge_height;
-				} else {
-					return '';
-				}
-			})();
-			spectrum_container.css({
-				'maxHeight': height,
-				'height': height,
-			});
+	$spectrum_container.on('mousemove', (event) => {
+		if (!spectrum_resizing) {
+			return;
+		}
+
+		const bounds = event.target.getBoundingClientRect();
+		spectrum_height = `${event.clientY - bounds.top}px`;
+
+		$spectrum_container.css({
+			'maxHeight': spectrum_height,
+			'height': spectrum_height,
 		});
-	}
+	}).on('mousedown', (event) => {
+		const bounds = event.target.getBoundingClientRect();
+		const edge_margin = 20;
+		if (bounds.right - event.clientX < edge_margin && bounds.bottom - event.clientY < edge_margin) {
+			spectrum_resizing = true;
+		}
+	}).on('mouseup', () => {
+		spectrum_resizing = false;
+	});
+}
+function modifySpectrum(): void {
+	fluidizeSpectrum();
+	resizeSpectrum();
 }
 
 function addProfileMemory(): void {

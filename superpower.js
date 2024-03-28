@@ -16,12 +16,12 @@ var superpower_settings;
     superpower_settings.spectrum_fluidity = true;
     superpower_settings.spectrum_fluidity_refresh_time = 30; // in ms
     superpower_settings.spectrum_enlarge = true;
-    superpower_settings.spectrum_enlarge_height = '200px';
+    superpower_settings.spectrum_enlarge_height = 200; // in px
+    superpower_settings.spectrum_enlarge_resizable = true; // experimental
     superpower_settings.frequency_change = true;
     superpower_settings.gain_change = true;
-    // Experimental
-    superpower_settings.waterfall_refreshing = false;
-    superpower_settings.profile_memory = false;
+    superpower_settings.waterfall_refreshing = false; // experimental
+    superpower_settings.profile_memory = false; // experimental
 })(superpower_settings || (superpower_settings = {}));
 $.fn.onClassChange = function (callback) {
     return $(this).each(({}, element) => {
@@ -43,6 +43,14 @@ $.fn.onResize = function (callback) {
             });
         }).observe(element);
     });
+};
+$.fn.isEventBound = function (type, fn) {
+    var _a;
+    const data = (_a = this.data('events')) === null || _a === void 0 ? void 0 : _a[type];
+    if (data === undefined || data.length === 0) {
+        return false;
+    }
+    return $.inArray(fn, data) !== -1;
 };
 // Utilities
 function waitFor(predicate, callback, delay = 100) {
@@ -529,38 +537,82 @@ function updateDisplay(sdr_profile, sdr_settings) {
     });
 }
 // New functionality/elements related stuff
-function modifySpectrum() {
+function fluidizeSpectrum() {
     var _a;
-    if (superpower_settings.spectrum_fluidity) {
-        // Replace instance of spectrum to improve fps
-        const canvas = (_a = $('#openwebrx-spectrum-canvas')) === null || _a === void 0 ? void 0 : _a[0];
-        if (canvas === undefined) {
-            return undefined;
+    if (!superpower_settings.spectrum_fluidity) {
+        return;
+    }
+    // Replace instance of spectrum to improve fps
+    const canvas = (_a = $('#openwebrx-spectrum-canvas')) === null || _a === void 0 ? void 0 : _a[0];
+    if (canvas === undefined) {
+        return undefined;
+    }
+    spectrum = undefined;
+    spectrum = new Spectrum(canvas, superpower_settings.spectrum_fluidity_refresh_time);
+}
+function resizeSpectrum() {
+    if (!superpower_settings.spectrum_enlarge) {
+        return;
+    }
+    // Change height of spectrum and remove background image and add event on hide/show spectrum
+    const $frequency_container = $('#openwebrx-frequency-container');
+    const $spectrum_container = $('.openwebrx-spectrum-container');
+    $frequency_container.css({
+        'background-image': 'none',
+    });
+    let spectrum_height = (() => {
+        if (superpower_settings.spectrum_enlarge_height !== undefined) {
+            return `${superpower_settings.spectrum_enlarge_height}px`;
         }
-        spectrum = undefined;
-        spectrum = new Spectrum(canvas, superpower_settings.spectrum_fluidity_refresh_time);
-    }
-    if (superpower_settings.spectrum_enlarge) {
-        // Change height of spectrum and remove background image and add event on hide/show spectrum
-        $('#openwebrx-frequency-container').css({
-            'background-image': 'none',
+        else {
+            return `${$spectrum_container.height()}px`;
+        }
+    })();
+    $spectrum_container.onClassChange(($spectrum_container) => {
+        const height = (() => {
+            if ($spectrum_container.hasClass('expanded')) {
+                return spectrum_height;
+            }
+            else {
+                return '';
+            }
+        })();
+        $spectrum_container.css({
+            'maxHeight': height,
+            'height': height,
         });
-        const spectrum_container = $('.openwebrx-spectrum-container');
-        spectrum_container.onClassChange((spectrum_container) => {
-            const height = (() => {
-                if (spectrum_container.hasClass('expanded')) {
-                    return superpower_settings.spectrum_enlarge_height;
-                }
-                else {
-                    return '';
-                }
-            })();
-            spectrum_container.css({
-                'maxHeight': height,
-                'height': height,
-            });
-        });
+    });
+    if (!superpower_settings.spectrum_enlarge_resizable) {
+        return;
     }
+    $spectrum_container.css({
+        'resize': 'vertical'
+    });
+    // Crude way to implement resizing. Current #openwebrx-frequency-container mousemove event ruines standard resizing.
+    let spectrum_resizing = false;
+    $spectrum_container.on('mousemove', (event) => {
+        if (!spectrum_resizing) {
+            return;
+        }
+        const bounds = event.target.getBoundingClientRect();
+        spectrum_height = `${event.clientY - bounds.top}px`;
+        $spectrum_container.css({
+            'maxHeight': spectrum_height,
+            'height': spectrum_height,
+        });
+    }).on('mousedown', (event) => {
+        const bounds = event.target.getBoundingClientRect();
+        const edge_margin = 20;
+        if (bounds.right - event.clientX < edge_margin && bounds.bottom - event.clientY < edge_margin) {
+            spectrum_resizing = true;
+        }
+    }).on('mouseup', () => {
+        spectrum_resizing = false;
+    });
+}
+function modifySpectrum() {
+    fluidizeSpectrum();
+    resizeSpectrum();
 }
 function addProfileMemory() {
     var _a;
