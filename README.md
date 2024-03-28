@@ -3,11 +3,11 @@ POC of Superpower plugin for OpenWebRX+
 
 ## Functionality
 - Increased zoom levels count
-- Increased waterfall refresh rate 
-- Enlargement of waterfall display area
-- Ability to resize waterfall display area (experimental)
+- Increased spectrum refresh rate 
+- Enlargement of spectrum display area
+- Ability to resize spectrum display area (experimental)
 - Ability to set any frequency
-- Ability to change the gain level / switch between auto/manual
+- Ability to change the gain level / switch between auto/manual gain
 - Last profile memory (experimental)
 
 ## Installation
@@ -39,6 +39,7 @@ POC of Superpower plugin for OpenWebRX+
 4) Plugin functionality is available after logging in as an administrator and selecting the newly created profile.
 
 ## Support
+Tested on RTL-SDR v4 and RSP1.
 You use this plugin at your own risk. There is no guarantee.
 
 ## Screenshot

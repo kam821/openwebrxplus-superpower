@@ -721,6 +721,7 @@ function resizeSpectrum(): void {
 		spectrum_resizing = false;
 	});
 }
+
 function modifySpectrum(): void {
 	fluidizeSpectrum();
 	resizeSpectrum();
