@@ -110,6 +110,19 @@ async function readSettings(sdr_profile: SdrProfile): Promise<SdrSetting[] | und
 		return undefined;
 	}
 
+	// FIXME: This is a hack for newer versions of OpenWebRX
+	const fix_exponents = (settings: SdrSetting[]) => {
+		return settings.map((setting) => {
+			if (setting.name.endsWith('-exponent')) {
+				return {
+					name: setting.name,
+					value: '0',
+				}
+			}
+			return setting;
+		});
+	}
+
 	try {
 		const doc: Document = await $.ajax({
 			url: `settings/sdr/${sdr_profile.device}/profile/${sdr_profile.id}`,
@@ -118,7 +131,7 @@ async function readSettings(sdr_profile: SdrProfile): Promise<SdrSetting[] | und
 				withCredentials: true
 			},
 		});
-		return $(doc).find('form.settings-body').serializeArray();
+		return fix_exponents($(doc).find('form.settings-body').serializeArray());
 	} catch (_err) {
 		return undefined;
 	}
